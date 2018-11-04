@@ -37,7 +37,7 @@ client.on('message', message => {
 });
 
 function reactRandom(message){
-    message.react(sample(emojis));
+    message.react(_.sample(emojis));
 }
 
 // Downloads the file at the specified url to the given path.
