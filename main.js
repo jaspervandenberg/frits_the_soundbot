@@ -65,12 +65,6 @@ function playSound(filepath, voiceChannel){
     if(voiceChannel != null){
         voiceChannel.join().then(connection => {
             const dispatcher = connection.playFile(filepath);
-            client.on('message', message => {
-                if(message == 'stop'){
-                    dispatcher.end();
-                    message.delete(1000);
-                }
-            });
         });
     }
 }
