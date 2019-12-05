@@ -120,5 +120,4 @@ function downLoadFromYoutubeAndPlay(message) {
     });
 }
 
-// TODO load key from configuration file
 client.login(config.bot.key);
