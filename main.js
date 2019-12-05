@@ -1,55 +1,59 @@
-const emojis = ['😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '😨', '😱', '😳', '😡', '😠', '😤', '😭', '😢', '😩', '😫', '😖', '🙁', '😕', '😟', '😔', '😞', '😒', '😏', '😎', '🤓', '😰', '😥', '😓', '🤗', '🖕', '🍆'];
-const audioFolder = './audio/';
+const config = require("./config/config");
 
 const Discord = require('discord.js');
 const https = require('https');
 const fs = require('fs');
 const _ = require('underscore');
+const youtubeDownloader = require('youtube-mp3-downloader');
 const fileType = require('file-type');
-const youtubedl = require('youtube-dl');
-const tempy = require('tempy');
-const sleep = require('sleep');
 const client = new Discord.Client();
 
+var YD = new youtubeDownloader({
+    "ffmpegPath": config.bot.ffmpegPath,        // Where is the FFmpeg binary located?
+    "outputPath": config.bot.audioFolder,       // Where should the downloaded and encoded files be stored?
+    "youtubeVideoQuality": "highest",           // What video quality should be used?
+    "queueParallelism": 1,                      // How many parallel downloads/encodes should be started?
+    "progressTimeout": 2000                     // How long should be the interval of the progress reports
+});
+
 client.on('message', message => {
-    var songs = fs.readdirSync(audioFolder);
+    var songs = fs.readdirSync(config.bot.audioFolder);
     // Message has no member, so its a private message
-    if(message.member == null && message.attachments != null){
+    if (message.member == null && message.attachments != null) {
         let attachment = message.attachments.values().next().value
-        if(attachment != null){
+        if (attachment != null) {
             downloadAndWriteToFile('audio/' + attachment.filename.toLowerCase(), attachment.url, message.channel)
         }
-    }else if(message.content == 'list'){
+    } else if (message.content == 'list') {
         message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
-        message.delete(1000);
-    }else if(message.content == 'random'){
-        playSound(audioFolder + _.sample(songs), message.member.voiceChannel);
-        message.delete(1000);
-    }else if(_.contains(songs, message.content + '.mp3')){
-        playSound(audioFolder + message.content + '.mp3', message.member.voiceChannel);
-        message.delete(1000);
-    }else if(message.content.startsWith('yt https://www.youtube.com/watch?v=')){
-	downLoadFromYoutubeAndPlay(message.content.replace('yt', ''), message.member.voiceChannel);
-        message.delete(1000);
-    }else{
-        reactRandom(message);
+        message.delete(1000).catch((error) => { console.log(error); });
+    } else if (message.content == 'random') {
+        playSound(config.bot.audioFolder + _.sample(songs), message.member.voiceChannel);
+        message.delete(1000).catch((error) => { console.log(error); });
+    } else if (_.contains(songs, message.content + '.mp3')) {
+        playSound(config.bot.audioFolder + message.content + '.mp3', message.member.voiceChannel);
+        message.delete(1000).catch((error) => { console.log(error); });
+    } else if (message.content.startsWith('yt https://www.youtube.com/watch?v=')) {
+        downLoadFromYoutubeAndPlay(message);
+    } else {
+        reactRandom(message).catch((error) => { console.log(error); });
     }
 });
 
-function reactRandom(message){
-    message.react(_.sample(emojis));
+function reactRandom(message) {
+    message.react(_.sample(config.bot.emojis));
 }
 
 // Downloads the file at the specified url to the given path.
 // Returns true if writing the file succeeds
-function downloadAndWriteToFile(path, url, responseChannel){
-    if(!fs.existsSync(path)){
-        https.get(url, function(response) {
+function downloadAndWriteToFile(path, url, responseChannel) {
+    if (!fs.existsSync(path)) {
+        https.get(url, function (response) {
             response.once('data', chunk => {
-                if(fileType(chunk).mime == 'audio/mpeg'){
+                if (fileType(chunk).mime == 'audio/mpeg') {
                     response.pipe(fs.createWriteStream(path));
                     responseChannel.send('File uploaded to bot');
-                }else{
+                } else {
                     responseChannel.send('Uploading file failed, are you sure its an mp3 file?');
                 }
             });
@@ -61,23 +65,60 @@ function downloadAndWriteToFile(path, url, responseChannel){
 }
 
 // Plays the given file into the specified voiceChannel.
-function playSound(filepath, voiceChannel){
-    if(voiceChannel != null){
+function playSound(filepath, voiceChannel) {
+    if (voiceChannel != null) {
         voiceChannel.join().then(connection => {
             const dispatcher = connection.playFile(filepath);
+        }).catch(err => {
+            console.log(err);
         });
     }
 }
 
-function downLoadFromYoutubeAndPlay(videoLink, voiceChannel){
-    let video = youtubedl(videoLink, ['--extract-audio']);
-    let tmpVideo = tempy.file({extension: 'mp3'});
-    video.pipe(fs.createWriteStream(tmpVideo));
+function downLoadFromYoutubeAndPlay(message) {
+    let videoId = message.content.replace('yt https://www.youtube.com/watch?v=', '');
 
-    video.on('end', function(){
-	playSound(tmpVideo, voiceChannel)
+    //Start youtube download
+    YD.download(videoId);
+
+    //On every 'progress' event. Send message with %
+    YD.on("progress", (progress) => {
+        message.channel.send('Progress ' + Math.round(progress.progress.percentage) + '%')
+            .then(
+                (progressMessage) => {
+                    progressMessage.delete(2000);
+                }
+            ).catch(
+                (err) => {
+                    console.log(err);
+                }
+            )
+    });
+
+    //When download is finished, play the file
+    YD.on("finished", (err, data) => {
+        let voiceChannel = message.member.voiceChannel;
+        message.delete(1000).catch((error) => { console.log(error); });
+
+        if (voiceChannel != null) {
+            voiceChannel.join().then(connection => {
+                let dispatcher = connection.playFile(data.file);
+
+                dispatcher.on('end', () => {
+                    fs.unlink(data.file, (err) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log('Temp file deleted');
+                        }
+                    })
+                })
+            }).catch(err => {
+                console.log(err);
+            });
+        }
     });
 }
 
 // TODO load key from configuration file
-client.login('KEY_HERE');
+client.login(config.bot.key);
