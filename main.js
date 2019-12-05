@@ -36,7 +36,7 @@ client.on('message', message => {
     } else if (message.content.startsWith('yt https://www.youtube.com/watch?v=')) {
         downLoadFromYoutubeAndPlay(message);
     } else {
-        reactRandom(message).catch((error) => { console.log(error); });
+        reactRandom(message);
     }
 });
 
