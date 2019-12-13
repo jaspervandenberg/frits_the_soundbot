@@ -8,35 +8,27 @@ const youtubeDownloader = require('youtube-mp3-downloader');
 const fileType = require('file-type');
 const client = new Discord.Client();
 
-var YD = new youtubeDownloader({
-    "ffmpegPath": config.bot.ffmpegPath,        // Where is the FFmpeg binary located?
-    "outputPath": config.bot.audioFolder,       // Where should the downloaded and encoded files be stored?
-    "youtubeVideoQuality": "highest",           // What video quality should be used?
-    "queueParallelism": 1,                      // How many parallel downloads/encodes should be started?
-    "progressTimeout": 2000                     // How long should be the interval of the progress reports
-});
-
 client.on('message', message => {
     var songs = fs.readdirSync(config.bot.audioFolder);
     // Message has no member, so its a private message
     if (message.member == null && message.attachments != null) {
         let attachment = message.attachments.values().next().value
         if (attachment != null) {
-            downloadAndWriteToFile('audio/' + attachment.filename.toLowerCase(), attachment.url, message.channel)
+            downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
         }
     } else if (message.content == 'list') {
         message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
-        message.delete(1000).catch((error) => { console.log(error); });
+        message.delete(1000);
     } else if (message.content == 'random') {
         playSound(config.bot.audioFolder + _.sample(songs), message.member.voiceChannel);
-        message.delete(1000).catch((error) => { console.log(error); });
+        message.delete(1000);
     } else if (_.contains(songs, message.content + '.mp3')) {
         playSound(config.bot.audioFolder + message.content + '.mp3', message.member.voiceChannel);
-        message.delete(1000).catch((error) => { console.log(error); });
+        message.delete(1000);
     } else if (message.content.startsWith('yt https://www.youtube.com/watch?v=')) {
         downLoadFromYoutubeAndPlay(message);
     } else {
-        reactRandom(message).catch((error) => { console.log(error); });
+        reactRandom(message);
     }
 });
 
@@ -76,7 +68,16 @@ function playSound(filepath, voiceChannel) {
 }
 
 function downLoadFromYoutubeAndPlay(message) {
+    var YD = new youtubeDownloader({
+        "ffmpegPath": config.bot.ffmpegPath,        // Where is the FFmpeg binary located?
+        "outputPath": config.bot.audioFolder,       // Where should the downloaded and encoded files be stored?
+        "youtubeVideoQuality": "highest",           // What video quality should be used?
+        "queueParallelism": 1,                      // How many parallel downloads/encodes should be started?
+        "progressTimeout": 2000                     // How long should be the interval of the progress reports
+    });
+
     let videoId = message.content.replace('yt https://www.youtube.com/watch?v=', '');
+    let voiceChannel = message.member.voiceChannel;
 
     //Start youtube download
     YD.download(videoId);
@@ -86,7 +87,7 @@ function downLoadFromYoutubeAndPlay(message) {
         message.channel.send('Progress ' + Math.round(progress.progress.percentage) + '%')
             .then(
                 (progressMessage) => {
-                    progressMessage.delete(2000);
+                    progressMessage.delete(2000).catch((error) => { console.log(error); });
                 }
             ).catch(
                 (err) => {
@@ -95,9 +96,12 @@ function downLoadFromYoutubeAndPlay(message) {
             )
     });
 
+    YD.on("error", (error, data) => {
+        message.channel.send('Er is iets fout gegaan: ' + error);
+    });
+
     //When download is finished, play the file
     YD.on("finished", (err, data) => {
-        let voiceChannel = message.member.voiceChannel;
         message.delete(1000).catch((error) => { console.log(error); });
 
         if (voiceChannel != null) {
