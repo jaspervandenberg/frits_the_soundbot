@@ -27,6 +27,8 @@ client.on('message', message => {
         message.delete(1000);
     } else if (message.content.startsWith('yt https://www.youtube.com/watch?v=')) {
         downLoadFromYoutubeAndPlay(message);
+    } else if (message.content.startsWith('Progress ')) {
+        //Do nothing
     } else {
         reactRandom(message);
     }
@@ -97,7 +99,7 @@ function downLoadFromYoutubeAndPlay(message) {
     });
 
     YD.on("error", (error, data) => {
-        message.channel.send('Er is iets fout gegaan: ' + error);
+        message.channel.send('Er is iets fout gegaan, iets met copyright ofzo');
     });
 
     //When download is finished, play the file
