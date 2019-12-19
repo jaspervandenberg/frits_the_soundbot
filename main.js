@@ -57,6 +57,16 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
+    } else if (message.content.startsWith('delete ')) {
+        //Delete song is author is admin.
+        if (isAdmin) {
+            lib.deleteSound(message);
+        } else {
+            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
+                responseMessage.delete(5000);
+            });
+            message.delete(1000);
+        }
     } else if (message.author.id == client.user.id) {
         //If message is by the bot, don't do anything.
     } else {

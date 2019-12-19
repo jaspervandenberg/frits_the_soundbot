@@ -40,6 +40,30 @@ module.exports.playSound = (filepath, voiceChannel) => {
     }
 }
 
+//Delete specified song
+module.exports.deleteSound = (message) => {
+    let sound = config.bot.audioFolder + message.content + '.mp3';
+    if (fs.existsSync(sound)) {
+        fs.unlink(sound, (err) => {
+            if (err) {
+                message.channel.send('Er is iets fout gegaan...').then((responseMessage) => {
+                    responseMessage.delete(5000);
+                });
+                console.log(err);
+            } else {
+                message.channel.send(message.content + ' is verwijderd.').then((responseMessage) => {
+                    responseMessage.delete(5000);
+                });
+            }
+        })
+    } else {
+        message.channel.send('Dat bestand bestaat niet').then((responseMessage) => {
+            responseMessage.delete(5000);
+        });
+        message.delete(1000);
+    }
+}
+
 //Gets the video ID from the message, downloads the video to MP3 then plays it in the authors voiceChannel.
 module.exports.downLoadFromYoutubeAndPlay = (message) => {
     var YD = new youtubeDownloader({
