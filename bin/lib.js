@@ -1,6 +1,5 @@
 const config = require("../config/config");
 const youtubeDownloader = require('youtube-mp3-downloader');
-
 const https = require('https');
 const fs = require('fs');
 const _ = require('underscore');
@@ -41,6 +40,7 @@ module.exports.playSound = (filepath, voiceChannel) => {
     }
 }
 
+//Gets the video ID from the message, downloads the video to MP3 then plays it in the authors voiceChannel.
 module.exports.downLoadFromYoutubeAndPlay = (message) => {
     var YD = new youtubeDownloader({
         "ffmpegPath": config.bot.ffmpegPath,        // Where is the FFmpeg binary located?
@@ -70,7 +70,9 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
             )
     });
 
-    YD.on("error", (error, data) => {
+    //When an error is emitted, send a message to the authors textChannel.
+    YD.on("error", (error) => {
+        console.log(error);
         message.channel.send('Er is iets fout gegaan, iets met copyright ofzo');
     });
 
@@ -98,10 +100,12 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
     });
 }
 
+//Checks if ID exists in the whitelist admin array
 module.exports.checkIfAdmin = (id) => {
     return config.whitelist.admins.includes(id);
 }
 
+//Checks if ID exists in the whitelist admin array
 module.exports.checkIfUser = (id) => {
     return config.whitelist.users.includes(id);
 }
