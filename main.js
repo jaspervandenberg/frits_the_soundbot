@@ -18,7 +18,7 @@ client.on('message', message => {
         let attachment = message.attachments.values().next().value
         if (attachment != null) {
             lib.downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
-        } else {
+        } else if (message.author.id !== client.user.id) {
             message.channel.send('Mooi man');
         }
     } else if (message.content.toLowerCase() == 'list') {
