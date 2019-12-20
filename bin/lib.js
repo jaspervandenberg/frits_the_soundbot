@@ -42,16 +42,17 @@ module.exports.playSound = (filepath, voiceChannel) => {
 
 //Delete specified song
 module.exports.deleteSound = (message) => {
-    let sound = config.bot.audioFolder + message.content + '.mp3';
-    if (fs.existsSync(sound)) {
-        fs.unlink(sound, (err) => {
+    let soundName = message.content.replace('delete ', '');
+    let soundPath = config.bot.audioFolder + soundName + '.mp3';
+    if (fs.existsSync(soundPath)) {
+        fs.unlink(soundPath, (err) => {
             if (err) {
                 message.channel.send('Er is iets fout gegaan...').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
                 console.log(err);
             } else {
-                message.channel.send(message.content + ' is verwijderd.').then((responseMessage) => {
+                message.channel.send(soundName + ' is verwijderd.').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
             }
