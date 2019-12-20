@@ -6,7 +6,7 @@ const _ = require('underscore');
 const client = new Discord.Client();
 
 client.on('message', message => {
-    //Check if author is an admin or user.
+    //Check if author is an admin or user. 
     let isAdmin = lib.checkIfAdmin(message.author.id);
     let isUser = lib.checkIfUser(message.author.id);
 
@@ -58,7 +58,7 @@ client.on('message', message => {
             message.delete(1000);
         }
     } else if (message.content.startsWith('delete ')) {
-        //Delete song is author is admin.
+        //Delete song if author is admin.
         if (isAdmin) {
             lib.deleteSound(message);
         } else {
