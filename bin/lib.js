@@ -50,11 +50,14 @@ module.exports.deleteSound = (message) => {
                 message.channel.send('Er is iets fout gegaan...').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
+                message.delete(1000);
                 console.log(err);
             } else {
                 message.channel.send(soundName + ' is verwijderd.').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
+                message.delete(1000);
+                console.log(message.author.username + ' heeft ' + soundName + ' verwijderd.');
             }
         })
     } else {
