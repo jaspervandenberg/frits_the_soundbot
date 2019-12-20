@@ -7,15 +7,15 @@ const client = new Discord.Client();
 
 client.on('message', message => {
     //Check if author is an admin or user. 
-    let isAdmin = lib.checkIfAdmin(message.author.id);
-    let isUser = lib.checkIfUser(message.author.id);
+    const isAdmin = lib.checkIfAdmin(message.author.id);
+    const isUser = lib.checkIfUser(message.author.id);
 
     //Load list of songs.
-    var songs = fs.readdirSync(config.bot.audioFolder);
+    const songs = fs.readdirSync(config.bot.audioFolder);
 
     if (message.member == null && message.attachments != null) {
         // Message has no member, so its a private message.
-        let attachment = message.attachments.values().next().value
+        const attachment = message.attachments.values().next().value
         if (attachment != null) {
             lib.downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
         } else if (message.author.id !== client.user.id) {

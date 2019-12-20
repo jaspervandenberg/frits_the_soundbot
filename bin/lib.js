@@ -42,8 +42,8 @@ module.exports.playSound = (filepath, voiceChannel) => {
 
 //Delete specified song
 module.exports.deleteSound = (message) => {
-    let soundName = message.content.replace('delete ', '');
-    let soundPath = config.bot.audioFolder + soundName + '.mp3';
+    const soundName = message.content.replace('delete ', '');
+    const soundPath = config.bot.audioFolder + soundName + '.mp3';
     if (fs.existsSync(soundPath)) {
         fs.unlink(soundPath, (err) => {
             if (err) {
@@ -78,8 +78,8 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         "progressTimeout": 2000                     // How long should be the interval of the progress reports
     });
 
-    let videoId = message.content.replace('yt https://www.youtube.com/watch?v=', '');
-    let voiceChannel = message.member.voiceChannel;
+    const videoId = message.content.replace('yt https://www.youtube.com/watch?v=', '');
+    const voiceChannel = message.member.voiceChannel;
 
     //Start youtube download
     YD.download(videoId);
@@ -110,7 +110,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
 
         if (voiceChannel != null) {
             voiceChannel.join().then(connection => {
-                let dispatcher = connection.playFile(data.file);
+                const dispatcher = connection.playFile(data.file);
 
                 dispatcher.on('end', () => {
                     fs.unlink(data.file, (err) => {
