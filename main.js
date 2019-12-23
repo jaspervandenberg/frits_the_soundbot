@@ -21,11 +21,26 @@ client.on('message', message => {
         } else if (message.author.id !== client.user.id) {
             message.channel.send('Mooi man');
         }
-    } else if (message.content.toLowerCase() == 'list') {
+    } else if (message.content.toLowerCase() == '!help') {
+        if (isAdmin) {
+            message.channel.send('List of commands [admin]: !help, !list, !random, !*song name*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
+                responseMessage.delete(5000);
+            });;
+        } else if (isUser) {
+            message.channel.send('List of commands [user]: !help, !list, !random, !*song name*, !yt *youtube link*').then((responseMessage) => {
+                responseMessage.delete(5000);
+            });;
+        } else {
+            message.channel.send('List of commands [non-user]: !help, !list').then((responseMessage) => {
+                responseMessage.delete(5000);
+            });;
+        }
+        message.delete(1000);
+    } else if (message.content.toLowerCase() == '!list') {
         //Reply with list of songs, no whitelist required.
         message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
         message.delete(1000);
-    } else if (message.content.toLowerCase() == 'random') {
+    } else if (message.content.toLowerCase() == '!random') {
         //Play a random song is author is admin or user.
         if (isAdmin || isUser) {
             lib.playSound(config.bot.audioFolder + _.sample(songs), message.member.voiceChannel);
@@ -36,7 +51,7 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
-    } else if (_.contains(songs, message.content.toLowerCase() + '.mp3')) {
+    } else if (_.contains(songs, message.content.toLowerCase() + '.mp3') && message.content.startsWith('!')) {
         //Play specific song if author is admin or user.
         if (isAdmin || isUser) {
             lib.playSound(config.bot.audioFolder + message.content.toLowerCase() + '.mp3', message.member.voiceChannel);
@@ -47,7 +62,7 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
-    } else if (message.content.startsWith('yt https://www.youtube.com/watch?v=')) {
+    } else if (message.content.startsWith('!yt https://www.youtube.com/watch?v=')) {
         //Download and play youtube song if author is admin or user.
         if (isAdmin || isUser) {
             lib.downLoadFromYoutubeAndPlay(message);
@@ -57,7 +72,7 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
-    } else if (message.content.startsWith('delete ')) {
+    } else if (message.content.startsWith('!delete ')) {
         //Delete song if author is admin.
         if (isAdmin) {
             lib.deleteSound(message);
@@ -75,10 +90,12 @@ client.on('message', message => {
     }
 });
 
-client.login(config.bot.key).then(
-    console.log('Bot is ready!')
-).catch(
-    (error) => {
-        console.log(error);
-    }
-);
+client.on('ready', () => {
+    console.log('Bot is ready!');
+});
+
+client.on('error', (error) => {
+    console.log('Error: ', error);
+})
+
+client.login(config.bot.key);
