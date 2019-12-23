@@ -51,7 +51,7 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
-    } else if (_.contains(songs, message.content.toLowerCase() + '.mp3') && message.content.startsWith('!')) {
+    } else if (_.contains(songs, message.content.toLowerCase().replace('!', '') + '.mp3') && message.content.startsWith('!')) {
         //Play specific song if author is admin or user.
         if (isAdmin || isUser) {
             let soundName = message.content.replace('!', '').toLowerCase();
