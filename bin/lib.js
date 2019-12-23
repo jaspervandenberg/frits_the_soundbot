@@ -42,7 +42,7 @@ module.exports.playSound = (filepath, voiceChannel) => {
 
 //Delete specified song
 module.exports.deleteSound = (message) => {
-    const soundName = message.content.replace('delete ', '');
+    const soundName = message.content.replace('!delete ', '');
     const soundPath = config.bot.audioFolder + soundName + '.mp3';
     if (fs.existsSync(soundPath)) {
         fs.unlink(soundPath, (err) => {
@@ -78,7 +78,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         "progressTimeout": 2000                     // How long should be the interval of the progress reports
     });
 
-    const videoId = message.content.replace('yt https://www.youtube.com/watch?v=', '');
+    const videoId = message.content.replace('!yt https://www.youtube.com/watch?v=', '');
     const voiceChannel = message.member.voiceChannel;
 
     //Start youtube download
@@ -101,7 +101,11 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
     //When an error is emitted, send a message to the authors textChannel.
     YD.on("error", (error) => {
         console.log(error);
-        message.channel.send('Er is iets fout gegaan, iets met copyright ofzo');
+        message.channel.send('Er is iets fout gegaan, iets met copyright ofzo').then(
+            (progressMessage) => {
+                progressMessage.delete(5000).catch((error) => { console.log(error); });
+            }
+        );
     });
 
     //When download is finished, play the file
