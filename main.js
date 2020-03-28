@@ -43,7 +43,11 @@ client.on('message', message => {
     } else if (message.content.toLowerCase() == '!random') {
         //Play a random song is author is admin or user.
         if (isAdmin || isUser) {
-            lib.playSound(config.bot.audioFolder + _.sample(songs), message.member.voiceChannel);
+            const song = _.sample(songs);
+            lib.playSound(config.bot.audioFolder + song, message.member.voiceChannel);
+            message.channel.send('Randomly chose ' + song.replace('.mp3', '')).then((responseMessage) => {
+                responseMessage.delete(5000);
+            });;
             message.delete(1000);
         } else {
             message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
