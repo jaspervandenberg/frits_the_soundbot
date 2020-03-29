@@ -4,11 +4,11 @@
   "main": "main.js",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^11.3.2",
+    "discord.js": "^11.6.3",
     "file-type": "^8.0.0",
     "node-opus": "^0.2.9",
-    "underscore": "^1.9.1",
+    "underscore": "^1.9.2",
     "youtube-dl": "^1.12.2",
-    "youtube-mp3-downloader": "^0.6.3"
+    "youtube-mp3-downloader": "^0.6.6"
   }
 }
