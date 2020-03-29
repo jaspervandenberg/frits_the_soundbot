@@ -131,13 +131,3 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         }
     });
 }
-
-//Checks if ID exists in the whitelist admin array
-module.exports.checkIfAdmin = (id) => {
-    return config.whitelist.admins.includes(id);
-}
-
-//Checks if ID exists in the whitelist admin array
-module.exports.checkIfUser = (id) => {
-    return config.whitelist.users.includes(id);
-}
