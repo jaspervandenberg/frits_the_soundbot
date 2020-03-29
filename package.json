@@ -6,7 +6,6 @@
   "dependencies": {
     "discord.js": "^11.3.2",
     "file-type": "^8.0.0",
-    "lowdb": "^1.0.0",
     "node-opus": "^0.2.9",
     "underscore": "^1.9.1",
     "youtube-dl": "^1.12.2",

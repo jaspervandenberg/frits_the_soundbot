@@ -4,19 +4,22 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const _ = require('underscore');
 const client = new Discord.Client();
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-
-const adapter = new FileSync('./config/users.json')
-const db = low(adapter)
-
-db.defaults({ users: [], admins: [] })
-    .write()
 
 client.on('message', message => {
-    //Check if author is an admin or user. 
-    const isAdmin = db.get('admins').value().includes(message.author.id);
-    const isUser = db.get('users').value().includes(message.author.id);
+
+    let isAdmin = false;
+    let isUser = false;
+
+    const userRoles = message.member.roles.array();
+
+    for (var i = 0; i < userRoles.length; i++) {
+        if (userRoles[i].name === config.roles.admin) {
+            isAdmin = true;
+        }
+        if (userRoles[i].name === config.roles.user) {
+            isUser = true;
+        }
+    }
 
     //Load list of songs.
     const songs = fs.readdirSync(config.bot.audioFolder);
@@ -31,7 +34,7 @@ client.on('message', message => {
         }
     } else if (message.content.toLowerCase() == '!help') {
         if (isAdmin) {
-            message.channel.send('List of commands [admin]: !help, !admin *@user*, !user *@user*, !list, !random, !*song name*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
+            message.channel.send('List of commands [admin]: !help, !list, !random, !*song name*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
         } else if (isUser) {
@@ -56,70 +59,6 @@ client.on('message', message => {
             message.channel.send('Randomly chose ' + song.replace('.mp3', '')).then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
-            message.delete(1000);
-        } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
-                responseMessage.delete(5000);
-            });
-            message.delete(1000);
-        }
-    } else if (message.content.toLowerCase().startsWith('!admin')) {
-        //Adds all @ mentioned users to the admin group.
-        if (isAdmin) {
-            const users = Array.from(message.mentions.users.values());
-            if (users.length > 0) {
-                for (var i = 0; i < users.length; i++) {
-                    if (db.get('admins').value().includes(users[i].id)) {
-                        message.channel.send(users[i].username + ' is al een admin.').then((responseMessage) => {
-                            responseMessage.delete(5000);
-                        });;
-                    } else {
-                        db.get('admins')
-                            .push(users[i].id)
-                            .write()
-
-                        message.channel.send(users[i].username + ' is nu een admins.').then((responseMessage) => {
-                            responseMessage.delete(10000);
-                        });;
-                    }
-                }
-            } else {
-                message.channel.send('Niemand is genoemd...').then((responseMessage) => {
-                    responseMessage.delete(5000);
-                });;
-            }
-            message.delete(1000);
-        } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
-                responseMessage.delete(5000);
-            });
-            message.delete(1000);
-        }
-    } else if (message.content.toLowerCase().startsWith('!user')) {
-        //Adds all @ mentioned users to the user group.
-        if (isAdmin) {
-            const users = Array.from(message.mentions.users.values());
-            if (users.length > 0) {
-                for (var i = 0; i < users.length; i++) {
-                    if (db.get('users').value().includes(users[i].id)) {
-                        message.channel.send(users[i].username + ' is al een user.').then((responseMessage) => {
-                            responseMessage.delete(5000);
-                        });;
-                    } else {
-                        db.get('users')
-                            .push(users[i].id)
-                            .write()
-
-                        message.channel.send(users[i].username + ' is nu een user.').then((responseMessage) => {
-                            responseMessage.delete(10000);
-                        });;
-                    }
-                }
-            } else {
-                message.channel.send('Niemand is genoemd...').then((responseMessage) => {
-                    responseMessage.delete(5000);
-                });;
-            }
             message.delete(1000);
         } else {
             message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
