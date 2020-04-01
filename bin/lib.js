@@ -47,13 +47,13 @@ module.exports.deleteSound = (message) => {
     if (fs.existsSync(soundPath)) {
         fs.unlink(soundPath, (err) => {
             if (err) {
-                message.channel.send('Er is iets fout gegaan...').then((responseMessage) => {
+                message.reply('Er is iets fout gegaan...').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
                 message.delete(1000);
                 console.log(err);
             } else {
-                message.channel.send(soundName + ' is verwijderd.').then((responseMessage) => {
+                message.reply(soundName + ' is verwijderd.').then((responseMessage) => {
                     responseMessage.delete(5000);
                 });
                 message.delete(1000);
@@ -61,7 +61,7 @@ module.exports.deleteSound = (message) => {
             }
         })
     } else {
-        message.channel.send('Dat bestand bestaat niet').then((responseMessage) => {
+        message.reply('Dat bestand bestaat niet').then((responseMessage) => {
             responseMessage.delete(5000);
         });
         message.delete(1000);
@@ -86,7 +86,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
 
     //On every 'progress' event. Send message with %
     YD.on("progress", (progress) => {
-        message.channel.send('Progress ' + Math.round(progress.progress.percentage) + '%')
+        message.reply('Download progress ' + Math.round(progress.progress.percentage) + '%')
             .then(
                 (progressMessage) => {
                     progressMessage.delete(2000).catch((error) => { console.log(error); });
@@ -101,11 +101,12 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
     //When an error is emitted, send a message to the authors textChannel.
     YD.on("error", (error) => {
         console.log(error);
-        message.channel.send('Er is iets fout gegaan, iets met copyright ofzo').then(
+        message.reply('Er is iets fout gegaan: ' + error).then(
             (progressMessage) => {
                 progressMessage.delete(5000).catch((error) => { console.log(error); });
             }
         );
+        message.delete(2000).catch((error) => { console.log(error); });
     });
 
     //When download is finished, play the file

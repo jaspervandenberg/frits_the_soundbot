@@ -6,20 +6,19 @@ const _ = require('underscore');
 const client = new Discord.Client();
 
 client.on('message', message => {
-
     let isAdmin = false;
     let isUser = false;
 
     const userRoles = message.member.roles.array();
 
-    for (var i = 0; i < userRoles.length; i++) {
-        if (userRoles[i].name === config.roles.admin) {
+    userRoles.forEach(role => {
+        if (role.name === config.roles.admin) {
             isAdmin = true;
         }
-        if (userRoles[i].name === config.roles.user) {
+        if (role.name === config.roles.user) {
             isUser = true;
         }
-    }
+    })
 
     //Load list of songs.
     const songs = fs.readdirSync(config.bot.audioFolder);
@@ -28,21 +27,25 @@ client.on('message', message => {
         // Message has no member, so its a private message.
         const attachment = message.attachments.values().next().value
         if (attachment != null) {
-            lib.downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
+            if (isUser || isAdmin) {
+                lib.downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
+            } else {
+                message.channel.send('Mag niet! Je bent geen bot user/admin.')
+            }
         } else if (message.author.id !== client.user.id) {
             message.channel.send('Mooi man');
         }
     } else if (message.content.toLowerCase() == '!help') {
         if (isAdmin) {
-            message.channel.send('List of commands [admin]: !help, !list, !random, !*song name*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
+            message.reply('List of commands [admin]: !help, !list, !random, !*song name*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
         } else if (isUser) {
-            message.channel.send('List of commands [user]: !help, !list, !random, !*song name*, !yt *youtube link*').then((responseMessage) => {
+            message.reply('List of commands [user]: !help, !list, !random, !*song name*, !yt *youtube link*').then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
         } else {
-            message.channel.send('List of commands [non-user]: !help, !list').then((responseMessage) => {
+            message.reply('List of commands [non-user]: !help, !list').then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
         }
@@ -56,12 +59,12 @@ client.on('message', message => {
         if (isAdmin || isUser) {
             const song = _.sample(songs);
             lib.playSound(config.bot.audioFolder + song, message.member.voiceChannel);
-            message.channel.send('Randomly chose ' + song.replace('.mp3', '')).then((responseMessage) => {
+            message.reply('Randomly chose ' + song.replace('.mp3', '')).then((responseMessage) => {
                 responseMessage.delete(5000);
             });;
             message.delete(1000);
         } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
+            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
                 responseMessage.delete(5000);
             });
             message.delete(1000);
@@ -69,11 +72,11 @@ client.on('message', message => {
     } else if (_.contains(songs, message.content.toLowerCase().replace('!', '') + '.mp3') && message.content.startsWith('!')) {
         //Play specific song if author is admin or user.
         if (isAdmin || isUser) {
-            let soundName = message.content.replace('!', '').toLowerCase();
+            const soundName = message.content.replace('!', '').toLowerCase();
             lib.playSound(config.bot.audioFolder + soundName + '.mp3', message.member.voiceChannel);
             message.delete(1000);
         } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
+            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
                 responseMessage.delete(5000);
             });
             message.delete(1000);
@@ -83,7 +86,7 @@ client.on('message', message => {
         if (isAdmin || isUser) {
             lib.downLoadFromYoutubeAndPlay(message);
         } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
+            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
                 responseMessage.delete(5000);
             });
             message.delete(1000);
@@ -93,7 +96,7 @@ client.on('message', message => {
         if (isAdmin) {
             lib.deleteSound(message);
         } else {
-            message.channel.send('MAG NIET! Je staat niet op de whitelist!').then((responseMessage) => {
+            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
                 responseMessage.delete(5000);
             });
             message.delete(1000);
