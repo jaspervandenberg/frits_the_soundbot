@@ -23,8 +23,8 @@ client.on('message', message => {
     //Load list of songs.
     const songs = fs.readdirSync(config.bot.audioFolder);
 
-    if (message.member == null && message.attachments != null) {
-        // Message has no member, so its a private message.
+    if (message.mentions._content == "!upload" && message.attachments != null) {
+        //Upload attached file to audio folder
         const attachment = message.attachments.values().next().value
         if (attachment != null) {
             if (isUser || isAdmin) {
