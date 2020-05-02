@@ -4,6 +4,7 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const _ = require('underscore');
 const client = new Discord.Client();
+const request = require('request');
 
 client.on('message', message => {
     let isAdmin = false;
@@ -53,6 +54,20 @@ client.on('message', message => {
     } else if (message.content.toLowerCase() == '!list') {
         //Reply with list of songs, no whitelist required.
         message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
+        message.delete(1000);
+    } else if (message.content.toLowerCase() == '!siebe') {
+        //Reply with list of songs, no whitelist required.
+        request('https://fritsbv.nl/random.json', { json: true }, (err, res, body) => {
+            if (err) {
+                message.reply('Er is iets fout gegaan...').then((responseMessage) => {
+                    responseMessage.delete(5000);
+                });
+                return console.log(err);
+            }
+            message.reply(body.keyword).then((responseMessage) => {
+                responseMessage.delete(5000);
+            });
+        });
         message.delete(1000);
     } else if (message.content.toLowerCase() == '!random') {
         //Play a random song is author is admin or user.
