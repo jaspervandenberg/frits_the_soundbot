@@ -64,7 +64,21 @@ client.on('message', message => {
                 });
                 return console.log(err);
             }
-            message.reply(body.keyword).then((responseMessage) => {
+            message.channel.send(body.keyword, { tts: true }).then((responseMessage) => {
+                responseMessage.delete(5000);
+            });
+        });
+        message.delete(1000);
+    } else if (message.content.toLowerCase() == '!siebetoday') {
+        //Reply with list of songs, no whitelist required.
+        request('https://fritsbv.nl/today.json', { json: true }, (err, res, body) => {
+            if (err) {
+                message.reply('Er is iets fout gegaan...').then((responseMessage) => {
+                    responseMessage.delete(5000);
+                });
+                return console.log(err);
+            }
+            message.channel.send(body.keyword, { tts: true }).then((responseMessage) => {
                 responseMessage.delete(5000);
             });
         });
