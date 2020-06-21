@@ -4,9 +4,29 @@ const https = require('https');
 const fs = require('fs');
 const _ = require('underscore');
 const fileType = require('file-type');
+const request = require('request');
 
 module.exports.reactRandom = (message) => {
     message.react(_.sample(config.bot.emojis));
+}
+
+module.exports.reactChibbafied = (message) => {
+    const string = message.content.replace('!chibba ', '');
+    const aids_level = -1;
+    const params = { string: string, aids_level: aids_level }
+    request({ url: 'https://fritsbv.nl/chibbify.json', qs: params }, (err, res, body) => {
+        if (err) {
+            message.reply('Er is iets fout gegaan...').then((responseMessage) => {
+                responseMessage.delete(5000);
+            });
+            return console.log(err);
+        }
+        var data = JSON.parse(body);
+        var content = message.member.displayName + ' said: ' + data.keyword;
+        message.channel.send(content).then((responseMessage) => {
+        });
+    });
+    message.delete(1000);
 }
 
 // Downloads the file at the specified url to the given path.

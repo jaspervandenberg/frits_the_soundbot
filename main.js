@@ -56,7 +56,7 @@ client.on('message', message => {
         message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
         message.delete(1000);
     } else if (message.content.toLowerCase() == '!siebe') {
-        //Reply with list of songs, no whitelist required.
+        //Reply with random chibba
         request('https://fritsbv.nl/random.json', { json: true }, (err, res, body) => {
             if (err) {
                 message.reply('Er is iets fout gegaan...').then((responseMessage) => {
@@ -70,7 +70,7 @@ client.on('message', message => {
         });
         message.delete(1000);
     } else if (message.content.toLowerCase() == '!siebetoday') {
-        //Reply with list of songs, no whitelist required.
+        //Reply with current chibba
         request('https://fritsbv.nl/today.json', { json: true }, (err, res, body) => {
             if (err) {
                 message.reply('Er is iets fout gegaan...').then((responseMessage) => {
@@ -130,6 +130,8 @@ client.on('message', message => {
             });
             message.delete(1000);
         }
+    } else if (message.content.toLowerCase().startsWith('!chibba')) {
+        lib.reactChibbafied(message);
     } else if (message.author.id == client.user.id) {
         //If message is by the bot, don't do anything.
     } else {
