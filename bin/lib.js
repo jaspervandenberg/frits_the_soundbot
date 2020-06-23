@@ -21,9 +21,10 @@ module.exports.reactChibbafied = (message) => {
             });
             return console.log(err);
         }
+        console.log(body);
         var data = JSON.parse(body);
-        var content = message.member.displayName + ' said: ' + data.keyword;
-        message.channel.send(content).then((responseMessage) => {
+        var content = data.keyword;
+        message.channel.send(content, { tts: true }).then((responseMessage) => {
         });
     });
     message.delete(1000);
