@@ -4,9 +4,9 @@
   "main": "main.js",
   "license": "MIT",
   "dependencies": {
+    "@discordjs/opus": "^0.3.2",
     "discord.js": "^12.2.0",
     "file-type": "^14.6.2",
-    "node-opus": "^0.3.3",
     "request": "^2.88.2",
     "underscore": "^1.10.2",
     "youtube-dl": "^3.0.2",
