@@ -4,12 +4,12 @@
   "main": "main.js",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^11.6.3",
-    "file-type": "^8.0.0",
-    "node-opus": "^0.2.9",
+    "discord.js": "^12.2.0",
+    "file-type": "^14.6.2",
+    "node-opus": "^0.3.3",
     "request": "^2.88.2",
-    "underscore": "^1.9.2",
-    "youtube-dl": "^1.12.2",
-    "youtube-mp3-downloader": "^0.6.6"
+    "underscore": "^1.10.2",
+    "youtube-dl": "^3.0.2",
+    "youtube-mp3-downloader": "^0.7.1"
   }
 }

@@ -5,6 +5,7 @@ const fs = require('fs');
 const _ = require('underscore');
 const fileType = require('file-type');
 const request = require('request');
+const main = require('../main');
 
 module.exports.reactRandom = (message) => {
     message.react(_.sample(config.bot.emojis));
@@ -17,7 +18,7 @@ module.exports.reactChibbafied = (message) => {
     request({ url: 'https://fritsbv.nl/chibbify.json', qs: params }, (err, res, body) => {
         if (err) {
             message.reply('Er is iets fout gegaan...').then((responseMessage) => {
-                responseMessage.delete(5000);
+                responseMessage.delete({ timeout: 5000 });
             });
             return console.log(err);
         }
@@ -27,7 +28,7 @@ module.exports.reactChibbafied = (message) => {
         message.channel.send(content, { tts: true }).then((responseMessage) => {
         });
     });
-    message.delete(1000);
+    message.delete({ timeout: 1000 });
 }
 
 // Downloads the file at the specified url to the given path.
@@ -54,7 +55,9 @@ module.exports.downloadAndWriteToFile = (path, url, responseChannel) => {
 module.exports.playSound = (filepath, voiceChannel) => {
     if (voiceChannel != null) {
         voiceChannel.join().then(connection => {
-            const dispatcher = connection.playFile(filepath);
+            const broadcast = main.client.voice.createBroadcast();
+            broadcast.play(filepath);
+            connection.play(broadcast);
         }).catch(err => {
             console.log(err);
         });
@@ -69,23 +72,23 @@ module.exports.deleteSound = (message) => {
         fs.unlink(soundPath, (err) => {
             if (err) {
                 message.reply('Er is iets fout gegaan...').then((responseMessage) => {
-                    responseMessage.delete(5000);
+                    responseMessage.delete({ timeout: 5000 });
                 });
-                message.delete(1000);
+                message.delete({ timeout: 1000 });
                 console.log(err);
             } else {
                 message.reply(soundName + ' is verwijderd.').then((responseMessage) => {
-                    responseMessage.delete(5000);
+                    responseMessage.delete({ timeout: 5000 });
                 });
-                message.delete(1000);
+                message.delete({ timeout: 1000 });
                 console.log(message.author.username + ' heeft ' + soundName + ' verwijderd.');
             }
         })
     } else {
         message.reply('Dat bestand bestaat niet').then((responseMessage) => {
-            responseMessage.delete(5000);
+            responseMessage.delete({ timeout: 5000 });
         });
-        message.delete(1000);
+        message.delete({ timeout: 1000 });
     }
 }
 
@@ -100,7 +103,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
     });
 
     const videoId = message.content.replace('!yt https://www.youtube.com/watch?v=', '');
-    const voiceChannel = message.member.voiceChannel;
+    const voiceChannel = message.member.voice.channel;
 
     //Start youtube download
     YD.download(videoId);
@@ -110,7 +113,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         message.reply('Download progress ' + Math.round(progress.progress.percentage) + '%')
             .then(
                 (progressMessage) => {
-                    progressMessage.delete(2000).catch((error) => { console.log(error); });
+                    progressMessage.delete({ timeout: 2000 }).catch((error) => { console.log(error); });
                 }
             ).catch(
                 (err) => {
@@ -124,7 +127,7 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         console.log(error);
         message.reply('Er is iets fout gegaan: ' + error).then(
             (progressMessage) => {
-                progressMessage.delete(5000).catch((error) => { console.log(error); });
+                progressMessage.delete({ timeout: 5000 }).catch((error) => { console.log(error); });
             }
         );
         message.delete(2000).catch((error) => { console.log(error); });
@@ -132,13 +135,15 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
 
     //When download is finished, play the file
     YD.on("finished", (err, data) => {
-        message.delete(1000).catch((error) => { console.log(error); });
+        message.delete({ timeout: 1000 }).catch((error) => { console.log(error); });
 
         if (voiceChannel != null) {
             voiceChannel.join().then(connection => {
-                const dispatcher = connection.playFile(data.file);
+                const broadcast = main.client.voice.createBroadcast();
+                broadcast.play(data.file);
+                connection.play(broadcast);
 
-                dispatcher.on('end', () => {
+                broadcast.on('unsubscribe', () => {
                     fs.unlink(data.file, (err) => {
                         if (err) {
                             console.log(err);
