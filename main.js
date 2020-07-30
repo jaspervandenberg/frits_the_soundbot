@@ -13,12 +13,8 @@ client.on('message', (message) => {
   // Check if message is private
   // If message has attachments, upload them
   if (!message.guild) {
-    if (message.mentions.content === '!upload' && message.attachments != null) {
-      if (isAdmin || isUser) {
-        lib.uploadSound(message);
-      } else {
-        lib.unAuthMessage();
-      }
+    if (message.attachments != null) {
+      lib.uploadSound(message);
     } else if (message.author.id !== client.user.id) {
       message.channel.send('Mooi man');
     }

@@ -213,7 +213,7 @@ module.exports.uploadSound = (message) => {
   // Upload attached file to audio folder
   const attachment = message.attachments.values().next().value;
   if (attachment != null) {
-    const file = config.bot.audioFolder + attachment.filename.toLowerCase();
+    const file = config.bot.audioFolder + attachment.name.toLowerCase();
     this.downloadAndWriteToFile(file, attachment.url, message.channel);
   } else if (message.author.id !== main.client.user.id) {
     message.channel.send('Mooi man');
@@ -306,7 +306,9 @@ module.exports.downLoadFromYoutubeAndPlay = (message) => {
         });
       },
     );
-    message.delete(2000).catch((err) => {
+    message.delete({
+      timeout: 2000,
+    }).catch((err) => {
       console.error(err);
     });
   });
