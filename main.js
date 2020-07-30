@@ -1,153 +1,97 @@
-const config = require("./config/config");
-const lib = require('./bin/lib');
+/* eslint-disable no-console */
 const Discord = require('discord.js');
-const fs = require('fs');
-const _ = require('underscore');
+const config = require('./config/config');
+const lib = require('./bin/lib');
+const songs = require('./bin/songs');
+
 const client = new Discord.Client();
-const request = require('request');
 
-client.on('message', message => {
-    let isAdmin = false;
-    let isUser = false;
+client.on('message', (message) => {
+  let isAdmin = false;
+  let isUser = false;
 
+  // Check if message is private
+  // If message has attachments, upload them
+  if (!message.guild) {
+    if (message.mentions.content === '!upload' && message.attachments != null) {
+      if (isAdmin || isUser) {
+        lib.uploadSound(message);
+      } else {
+        lib.unAuthMessage();
+      }
+    } else if (message.author.id !== client.user.id) {
+      message.channel.send('Mooi man');
+    }
+  } else {
     const userRoles = message.member.roles.cache.array();
 
-    userRoles.forEach(role => {
-        if (role.name === config.roles.admin) {
-            isAdmin = true;
-        }
-        if (role.name === config.roles.user) {
-            isUser = true;
-        }
-    })
+    userRoles.forEach((role) => {
+      if (role.name === config.roles.admin) {
+        isAdmin = true;
+      }
+      if (role.name === config.roles.user) {
+        isUser = true;
+      }
+    });
 
-    //Load list of songs.
-    const songs = fs.readdirSync(config.bot.audioFolder);
-
-    if (message.mentions._content == "!upload" && message.attachments != null) {
-        //Upload attached file to audio folder
-        const attachment = message.attachments.values().next().value
-        if (attachment != null) {
-            if (isUser || isAdmin) {
-                lib.downloadAndWriteToFile(config.bot.audioFolder + attachment.filename.toLowerCase(), attachment.url, message.channel)
-            } else {
-                message.channel.send('Mag niet! Je bent geen bot user/admin.')
-            }
-        } else if (message.author.id !== client.user.id) {
-            message.channel.send('Mooi man');
-        }
-    } else if (message.content.toLowerCase() == '!help') {
-        if (isAdmin) {
-            message.reply('List of commands [admin]: !help, !list, !random, !*song name*, !siebe, !siebe_today, !chibba *text*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });;
-        } else if (isUser) {
-            message.reply('List of commands [user]: !help, !list, !random, !*song name*, !siebe, !siebe_today, !chibba *text*, !yt *youtube link*').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });;
-        } else {
-            message.reply('List of commands [non-user]: !help, !list').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });;
-        }
-        message.delete({ timeout: 1000 });
-    } else if (message.content.toLowerCase() == '!list') {
-        //Reply with list of songs, no whitelist required.
-        message.channel.send('Songs: ' + songs.map(x => x.replace('.mp3', '')).join(', '))
-        message.delete({ timeout: 1000 });
-    } else if (message.content.toLowerCase() == '!siebe') {
-        //Reply with random chibba
-        request('https://fritsbv.nl/random.json', { json: true }, (err, res, body) => {
-            if (err) {
-                message.reply('Er is iets fout gegaan...').then((responseMessage) => {
-                    responseMessage.delete({ timeout: 5000 });
-                });
-                return console.log(err);
-            }
-            message.channel.send(body.keyword, { tts: true }).then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-        });
-        message.delete({ timeout: 1000 });
-    } else if (message.content.toLowerCase() == '!siebetoday' || message.content.toLowerCase() == '!siebe_today') {
-        //Reply with current chibba
-        request('https://fritsbv.nl/today.json', { json: true }, (err, res, body) => {
-            if (err) {
-                message.reply('Er is iets fout gegaan...').then((responseMessage) => {
-                    responseMessage.delete({ timeout: 5000 });
-                });
-                return console.log(err);
-            }
-            message.channel.send(body.keyword, { tts: true }).then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-        });
-        message.delete({ timeout: 1000 });
-    } else if (message.content.toLowerCase() == '!random') {
-        //Play a random song is author is admin or user.
-        if (isAdmin || isUser) {
-            const song = _.sample(songs);
-            lib.playSound(config.bot.audioFolder + song, message.member.voice.channel);
-            message.reply('Randomly chose ' + song.replace('.mp3', '')).then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });;
-            message.delete({ timeout: 1000 });
-        } else {
-            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-            message.delete({ timeout: 1000 });
-        }
-    } else if (_.contains(songs, message.content.toLowerCase().replace('!', '') + '.mp3') && message.content.startsWith('!')) {
-        //Play specific song if author is admin or user.
-        if (isAdmin || isUser) {
-            const soundName = message.content.replace('!', '').toLowerCase();
-            lib.playSound(config.bot.audioFolder + soundName + '.mp3', message.member.voice.channel);
-            message.delete({ timeout: 1000 });
-        } else {
-            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-            message.delete({ timeout: 1000 });
-        }
+    if (message.content.toLowerCase() === '!help') {
+      // Reply with list of commands based on role
+      lib.helpMessage(message, isAdmin, isUser);
+    } else if (message.content.toLowerCase() === '!list') {
+      lib.listSounds(message);
+    } else if (message.content.toLowerCase() === '!siebe') {
+      // Reply with random chibba
+      lib.chibba(message);
+    } else if (message.content.toLowerCase() === '!siebetoday' || message.content.toLowerCase() === '!siebe_today') {
+      // Reply with current chibba
+      lib.chibbaToday(message);
+    } else if (message.content.toLowerCase() === '!random') {
+      // Play random sound if author is admin or user.
+      if (isAdmin || isUser) {
+        lib.playRandomSong(message);
+      } else {
+        lib.unAuthMessage(message);
+      }
+    } else if (songs.checkIfExists(`${message.content.replace('!', '').toLowerCase()}`) && message.content.startsWith('!')) {
+      // Play specific sound if author is admin or user.
+      if (isAdmin || isUser) {
+        lib.playSpecificSong(message);
+      } else {
+        lib.unAuthMessage(message);
+      }
     } else if (message.content.startsWith('!yt https://www.youtube.com/watch?v=')) {
-        //Download and play youtube song if author is admin or user.
-        if (isAdmin || isUser) {
-            lib.downLoadFromYoutubeAndPlay(message);
-        } else {
-            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-            message.delete({ timeout: 1000 });
-        }
+      // Download and play youtube song if author is admin or user.
+      if (isAdmin || isUser) {
+        lib.downLoadFromYoutubeAndPlay(message);
+      } else {
+        lib.unAuthMessage(message);
+      }
     } else if (message.content.startsWith('!delete ')) {
-        //Delete song if author is admin.
-        if (isAdmin) {
-            lib.deleteSound(message);
-        } else {
-            message.reply('Mag niet! Je bent geen bot user/admin.').then((responseMessage) => {
-                responseMessage.delete({ timeout: 5000 });
-            });
-            message.delete({ timeout: 1000 });
-        }
+      // Delete song if author is admin.
+      if (isAdmin) {
+        lib.deleteSound(message);
+      } else {
+        lib.unAuthMessage(message);
+      }
     } else if (message.content.toLowerCase().startsWith('!chibba')) {
-        //React with chibbafied messages
-        lib.reactChibbafied(message);
-    } else if (message.author.id == client.user.id) {
-        //If message is by the bot, don't do anything.
+      // React with chibbafied messages
+      lib.reactChibbafied(message);
+    } else if (message.author.id === client.user.id) {
+      // If message is by the bot, don't do anything.
     } else {
-        //React with random emoji on all other messages.
-        lib.reactRandom(message);
+      // React with random emoji on all other messages.
+      lib.reactRandom(message);
     }
+  }
 });
 
 client.on('ready', () => {
-    console.log('Bot is ready!');
+  console.error('Bot is ready!');
 });
 
 client.on('error', (error) => {
-    console.log('Error: ', error);
-})
+  console.error('Error: ', error);
+});
 
 client.login(config.bot.key);
 
