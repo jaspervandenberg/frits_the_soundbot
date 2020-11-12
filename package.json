@@ -4,17 +4,17 @@
   "main": "main.js",
   "license": "MIT",
   "dependencies": {
-    "@discordjs/opus": "^0.3.2",
-    "discord.js": "^12.2.0",
-    "request": "^2.88.2",
+    "@discordjs/opus": "^0.3.3",
+    "discord.js": "^12.4.1",
     "file-type": "8.0.0",
-    "underscore": "^1.10.2",
+    "request": "^2.88.2",
+    "underscore": "^1.11.0",
     "youtube-dl": "^3.0.2",
-    "youtube-mp3-downloader": "^0.7.1"
+    "youtube-mp3-downloader": "^0.7.4"
   },
   "devDependencies": {
-    "eslint": "^7.5.0",
-    "eslint-config-airbnb-base": "^14.2.0",
-    "eslint-plugin-import": "^2.22.0"
+    "eslint": "^7.13.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1"
   }
 }

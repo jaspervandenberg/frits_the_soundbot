@@ -8,6 +8,9 @@ const request = require('request');
 const main = require('../main');
 const config = require('../config/config');
 const songs = require('./songs');
+const {
+  MessageEmbed
+} = require('discord.js');
 
 module.exports.reactRandom = (message) => {
   message.react(_.sample(config.bot.emojis));
@@ -166,12 +169,20 @@ module.exports.errorMessage = (message) => {
 };
 
 module.exports.listSounds = (message) => {
-  // Reply with list of songs, no whitelist required.
-  const songString = songs.updateSongs().map((x) => x.replace('.mp3', '')).join(', ');
-  message.channel.send(`Songs: ${songString}`);
-  message.delete({
-    timeout: 1000,
-  });
+  try {
+    // Reply with list of songs, no whitelist required.
+    const songString = songs.updateSongs().map((x) => x.replace('.mp3', '')).join(', ');
+    const messageEmbed = new MessageEmbed();
+    messageEmbed.setDescription(songString);
+    messageEmbed.setTitle('List of sounds');
+    message.channel.send(messageEmbed);
+    // message.channel.send(`Songs: ${songString}`);
+    message.delete({
+      timeout: 1000,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 module.exports.playSpecificSong = (message) => {
