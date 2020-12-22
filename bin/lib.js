@@ -5,12 +5,12 @@ const fs = require('fs');
 const _ = require('underscore');
 const fileType = require('file-type');
 const request = require('request');
+const {
+  MessageEmbed,
+} = require('discord.js');
 const main = require('../main');
 const config = require('../config/config');
 const songs = require('./songs');
-const {
-  MessageEmbed
-} = require('discord.js');
 
 module.exports.reactRandom = (message) => {
   message.react(_.sample(config.bot.emojis));
