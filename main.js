@@ -91,4 +91,14 @@ client.on('error', (error) => {
 
 client.login(config.bot.key);
 
+setInterval(() => {
+  if (client.voice.connections.length !== 0) {
+    for (const connection of client.voice.connections.values()) {
+      if (connection.channel.members === 1) {
+        connection.disconnect();
+      }
+    }
+  }
+}, 10000);
+
 module.exports.client = client;
