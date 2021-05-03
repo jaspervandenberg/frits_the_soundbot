@@ -59,3 +59,9 @@ typings/
 
 # next.js build output
 .next
+
+# audio files
+.mp3
+
+# filled in config file
+config/config.js

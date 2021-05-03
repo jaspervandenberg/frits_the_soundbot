@@ -91,4 +91,16 @@ client.on('error', (error) => {
 
 client.login(config.bot.key);
 
+//Every minute check if the current voicechannel is empty. If it is, disconnect.
+setInterval(() => {
+  let connections = Array.from(client.voice.connections)
+  if (connections.length > 0) {
+    for (const connection of client.voice.connections.values()) {
+      if (Array.from(connection.channel.members).length === 1) {
+        connection.disconnect();
+      }
+    }
+  }
+}, 60000);
+
 module.exports.client = client;
