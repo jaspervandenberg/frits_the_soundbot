@@ -8,7 +8,7 @@
     "discord.js": "^12.5.1",
     "file-type": "8.0.0",
     "request": "^2.88.2",
-    "underscore": "^1.12.0",
+    "underscore": "^1.12.1",
     "youtube-dl": "^3.0.2",
     "youtube-mp3-downloader": "^0.7.6"
   },
