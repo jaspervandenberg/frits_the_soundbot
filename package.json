@@ -6,7 +6,7 @@
   "dependencies": {
     "@discordjs/opus": "^0.3.3",
     "discord.js": "^12.5.1",
-    "file-type": "8.0.0",
+    "file-type": "16.5.4",
     "request": "^2.88.2",
     "underscore": "^1.12.1",
     "youtube-dl": "^3.0.2",
