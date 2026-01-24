@@ -6,11 +6,19 @@ const _ = require('underscore');
 const fileType = require('file-type');
 const request = require('request');
 const {
-  MessageEmbed,
+  EmbedBuilder,
 } = require('discord.js');
 const main = require('../main');
 const config = require('../config/config');
 const songs = require('./songs');
+const {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  entersState,
+  VoiceConnectionStatus,
+  AudioPlayerStatus
+} = require('@discordjs/voice');
 
 module.exports.reactRandom = (message) => {
   message.react(_.sample(config.bot.emojis));
@@ -38,7 +46,7 @@ module.exports.reactChibbafied = (message) => {
       });
     });
     message.delete({
-      timeout: 1000,
+      timeout: 10000,
     });
   } catch (error) {
     if (error) {
@@ -68,7 +76,7 @@ module.exports.chibba = (message) => {
       });
     });
     message.delete({
-      timeout: 1000,
+      timeout: 10000,
     });
   } catch (error) {
     this.errorMessage(message);
@@ -92,7 +100,7 @@ module.exports.chibbaToday = (message) => {
       });
     });
     message.delete({
-      timeout: 1000,
+      timeout: 10000,
     });
   } catch (error) {
     this.errorMessage(message);
@@ -105,12 +113,20 @@ module.exports.downloadAndWriteToFile = (path, url, responseChannel) => {
   if (!fs.existsSync(path)) {
     try {
       https.get(url, (response) => {
-        response.once('data', (chunk) => {
-          if (fileType(chunk).mime === 'audio/mpeg') {
-            response.pipe(fs.createWriteStream(path));
-            responseChannel.send('File uploaded to bot');
-          } else {
-            responseChannel.send('Uploading file failed, are you sure its an mp3 file?');
+        response.once('data', async (chunk) => {
+          try {
+            const type = await fileType.fileTypeFromBuffer(chunk);
+            if (type && type.mime === 'audio/mpeg') {
+              response.pipe(fs.createWriteStream(path));
+              responseChannel.send('File uploaded to bot');
+            } else {
+              responseChannel.send('Uploading file failed, are you sure its an mp3 file?');
+              response.destroy();
+            }
+          } catch (err) {
+            console.log('Error checking file type:', err);
+            responseChannel.send('Error checking file type.');
+            response.destroy();
           }
         });
       });
@@ -121,32 +137,6 @@ module.exports.downloadAndWriteToFile = (path, url, responseChannel) => {
     responseChannel.send('File already exists, dumbass');
   }
   return true;
-};
-
-// Reply with list of commands based on role
-module.exports.helpMessage = (message, isAdmin, isUser) => {
-  if (isAdmin) {
-    message.reply('List of commands [admin]: !help, !list, !random, !*song name*, !siebe, !siebe_today, !chibba *text*, !yt *youtube link*, !delete *song name*').then((responseMessage) => {
-      responseMessage.delete({
-        timeout: 5000,
-      });
-    });
-  } else if (isUser) {
-    message.reply('List of commands [user]: !help, !list, !random, !*song name*, !siebe, !siebe_today, !chibba *text*, !yt *youtube link*').then((responseMessage) => {
-      responseMessage.delete({
-        timeout: 5000,
-      });
-    });
-  } else {
-    message.reply('List of commands [non-user]: !help, !list').then((responseMessage) => {
-      responseMessage.delete({
-        timeout: 5000,
-      });
-    });
-  }
-  message.delete({
-    timeout: 1000,
-  });
 };
 
 module.exports.unAuthMessage = (message) => {
@@ -170,18 +160,26 @@ module.exports.errorMessage = (message) => {
 
 module.exports.listSounds = (message) => {
   try {
-    // Reply with list of songs, no whitelist required.
+    // Get updated song list and format it
     const songString = songs.updateSongs().map((x) => x.replace('.mp3', '')).join(', ');
-    const messageEmbed = new MessageEmbed();
-    messageEmbed.setDescription(songString);
-    messageEmbed.setTitle('List of sounds');
-    message.channel.send(messageEmbed);
-    // message.channel.send(`Songs: ${songString}`);
-    message.delete({
-      timeout: 1000,
-    });
+
+    // Create and configure the embed
+    const messageEmbed = new EmbedBuilder()
+      .setTitle('List of sounds')
+      .setDescription(songString);
+
+    // Send the embed
+    message.channel.send({ embeds: [messageEmbed] });
+
+    // Delete the command message after 1 second
+    setTimeout(() => {
+      if (message.deletable) {
+        message.delete().catch(console.error);
+      }
+    }, 1000);
+
   } catch (error) {
-    console.log(error);
+    console.error('Error listing sounds:', error);
   }
 };
 
@@ -193,39 +191,77 @@ module.exports.playSpecificSong = (message) => {
   });
 };
 
-module.exports.playRandomSong = (message) => {
-  // Play a random song is author is admin or user.
-  const song = _.sample(songs.updateSongs());
-  this.playSound(config.bot.audioFolder + song, message.member.voice.channel);
-  message.reply(`Randomly chose ${song.replace('.mp3', '')}`).then((responseMessage) => {
-    responseMessage.delete({
-      timeout: 5000,
-    });
-  });
-  message.delete({
-    timeout: 1000,
-  });
+module.exports.playRandomSong = async (message) => {
+  try {
+    // Check voice channel first
+    if (!message.member.voice.channel) {
+      return message.reply('You need to be in a voice channel to play a song!');
+    }
+
+    // Pick a random song
+    const song = _.sample(songs.updateSongs());
+
+    // Play sound (assuming this.playSound is properly bound or imported)
+    this.playSound(config.bot.audioFolder + song, message.member.voice.channel);
+
+    // Reply with chosen song
+    const responseMessage = await message.reply(`Randomly chose ${song.replace('.mp3', '')}`);
+
+    // Delete the reply after 10 seconds
+    setTimeout(() => {
+      responseMessage.delete().catch(() => { });
+    }, 10_000);
+
+    // Delete the original message after 5 seconds
+    setTimeout(() => {
+      message.delete().catch(() => { });
+    }, 5_000);
+
+  } catch (error) {
+    console.error('Error in playRandomSong:', error);
+  }
 };
 
 // Plays the given file into the specified voiceChannel.
-module.exports.playSound = (filepath, voiceChannel) => {
-  if (voiceChannel != null) {
-    voiceChannel.join().then((connection) => {
-      const broadcast = main.client.voice.createBroadcast();
-      broadcast.play(filepath);
-      connection.play(broadcast);
-    }).catch((err) => {
-      console.error(err);
+module.exports.playSound = async (filepath, voiceChannel) => {
+  if (!voiceChannel) return;
+
+  const connection = joinVoiceChannel({
+    channelId: voiceChannel.id,
+    guildId: voiceChannel.guild.id,
+    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+  });
+
+  try {
+    await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+
+    const player = createAudioPlayer();
+    const resource = createAudioResource(filepath); // filepath must be a valid local path or stream
+
+    connection.subscribe(player);
+    player.play(resource);
+
+    // Auto disconnect after the sound finishes
+    player.on(AudioPlayerStatus.Idle, () => {
+      connection.destroy();
     });
+
+    player.on('error', err => {
+      console.error('Audio player error:', err);
+      connection.destroy();
+    });
+  } catch (err) {
+    console.error('Voice connection failed:', err);
+    connection.destroy();
   }
 };
 
 module.exports.uploadSound = (message) => {
-  // Upload attached file to audio folder
-  const attachment = message.attachments.values().next().value;
-  if (attachment != null) {
-    const file = config.bot.audioFolder + attachment.name.toLowerCase();
-    this.downloadAndWriteToFile(file, attachment.url, message.channel);
+  if (message.attachments.size > 0) {
+    message.attachments.forEach(attachment => {
+      const file = config.bot.audioFolder + attachment.name.toLowerCase();
+      this.downloadAndWriteToFile(file, attachment.url, message.channel);
+    });
   } else if (message.author.id !== main.client.user.id) {
     message.channel.send('Mooi man');
   }
